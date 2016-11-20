@@ -732,19 +732,19 @@ def test_read_magic():
     assert_(s1.tell() == format.MAGIC_LEN)
     assert_(s2.tell() == format.MAGIC_LEN)
 
-### TEMPORARY DISABLE TO TEST PYTEST
-###@skipif(True, "pytest temporary")
-###def test_read_magic_bad_magic():
-###    for magic in malformed_magic:
-###        f = BytesIO(magic)
-###        yield raises(ValueError)(format.read_magic), f
+
+def test_read_magic_bad_magic():
+    for magic in malformed_magic:
+        f = BytesIO(magic)
+        #yield raises(ValueError)(format.read_magic), f
+        yield assert_raises, ValueError, format.read_magic, f
 
 
-###@skipif(True, "pytest temporary")
-###def test_read_version_1_0_bad_magic():
-###    for magic in bad_version_magic + malformed_magic:
-###        f = BytesIO(magic)
-###        yield raises(ValueError)(format.read_array), f
+def test_read_version_1_0_bad_magic():
+    for magic in bad_version_magic + malformed_magic:
+        f = BytesIO(magic)
+#        yield raises(ValueError)(format.read_array), f
+        yield assert_raises, ValueError, format.read_array, f
 
 
 def test_bad_magic_args():
