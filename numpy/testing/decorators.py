@@ -116,53 +116,8 @@ def skipif(skip_condition, msg=None):
     function in order to transmit function name, and various other metadata.
 
     """
-
-    def skip_decorator(f):
-        # Local import to avoid a hard nose dependency and only incur the
-        # import time overhead at actual test-time.
-        import nose
-
-        # Allow for both boolean or callable skip conditions.
-        if isinstance(skip_condition, collections.Callable):
-            skip_val = lambda: skip_condition()
-        else:
-            skip_val = lambda: skip_condition
-
-        def get_msg(func,msg=None):
-            """Skip message with information about function being skipped."""
-            if msg is None:
-                out = 'Test skipped due to test condition'
-            else:
-                out = msg
-
-            return "Skipping test: %s: %s" % (func.__name__, out)
-
-        # We need to define *two* skippers because Python doesn't allow both
-        # return with value and yield inside the same function.
-        def skipper_func(*args, **kwargs):
-            """Skipper for normal test functions."""
-            if skip_val():
-                raise SkipTest(get_msg(f, msg))
-            else:
-                return f(*args, **kwargs)
-
-        def skipper_gen(*args, **kwargs):
-            """Skipper for test generators."""
-            if skip_val():
-                raise SkipTest(get_msg(f, msg))
-            else:
-                for x in f(*args, **kwargs):
-                    yield x
-
-        # Choose the right skipper to use when building the actual decorator.
-        if nose.util.isgenerator(f):
-            skipper = skipper_gen
-        else:
-            skipper = skipper_func
-
-        return nose.tools.make_decorator(f)(skipper)
-
-    return skip_decorator
+    import pytest
+    return pytest.mark.skipif(skip_condition, reason=msg)
 
 
 def knownfailureif(fail_condition, msg=None):
@@ -195,29 +150,9 @@ def knownfailureif(fail_condition, msg=None):
     function in order to transmit function name, and various other metadata.
 
     """
-    if msg is None:
-        msg = 'Test skipped due to known failure'
+    import pytest
+    return pytest.mark.xfail(fail_condition, reason=msg)
 
-    # Allow for both boolean or callable known failure conditions.
-    if isinstance(fail_condition, collections.Callable):
-        fail_val = lambda: fail_condition()
-    else:
-        fail_val = lambda: fail_condition
-
-    def knownfail_decorator(f):
-        # Local import to avoid a hard nose dependency and only incur the
-        # import time overhead at actual test-time.
-        import nose
-        from .noseclasses import KnownFailureException
-
-        def knownfailer(*args, **kwargs):
-            if fail_val():
-                raise KnownFailureException(msg)
-            else:
-                return f(*args, **kwargs)
-        return nose.tools.make_decorator(f)(knownfailer)
-
-    return knownfail_decorator
 
 def deprecated(conditional=True):
     """

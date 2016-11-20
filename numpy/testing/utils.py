@@ -1179,8 +1179,8 @@ def assert_raises(*args, **kwargs):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    nose = import_nose()
-    return nose.tools.assert_raises(*args,**kwargs)
+    import pytest
+    return pytest.raises(*args, **kwargs)
 
 
 def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
