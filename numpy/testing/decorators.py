@@ -52,8 +52,12 @@ def slow(t):
 
     """
 
-    t.slow = True
-    return t
+#    t.slow = True
+#    return t
+    import pytest
+    return pytest.mark.skipif(not pytest.config.getoption("--full"),
+                              reason="need --full option to run.")
+
 
 def setastest(tf=True):
     """
