@@ -2,7 +2,6 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import locale
-import nose
 
 import numpy as np
 from numpy.testing import (
@@ -230,7 +229,8 @@ def in_foreign_locale(func):
             return func(*args, **kwargs)
         finally:
             locale.setlocale(locale.LC_NUMERIC, locale=curloc)
-    return nose.tools.make_decorator(func)(wrapper)
+    #return nose.tools.make_decorator(func)(wrapper)
+    return wrapper(func)
 
 @in_foreign_locale
 def test_locale_single():
