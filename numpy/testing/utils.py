@@ -1204,14 +1204,17 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    nose = import_nose()
+    # https://github.com/nose-devs/nose/blob/master/nose/tools/trivial.py
+    import unittest
+    class Dummy(unittest.TestCase):
+        def nop(self):
+            pass
+    _t = Dummy('nop')
 
     if sys.version_info.major >= 3:
-        funcname = nose.tools.assert_raises_regex
+        funcname = _t.assertRaisesRegex
     else:
-        # Only present in Python 2.7, missing from unittest in 2.6
-        funcname = nose.tools.assert_raises_regexp
-
+        funcname = _t.assertRaisesRegexp
     return funcname(exception_class, expected_regexp, *args, **kwargs)
 
 
