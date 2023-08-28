@@ -58,7 +58,7 @@ jobs:
         run: |
           # Pyodide is still in the process of adding better/easier support for
           # non-setup.py based builds.
-          cp pyproject.toml.setuppy pyproject.toml
+          # cp pyproject.toml.setuppy pyproject.toml
           CFLAGS=-g2 LDFLAGS=-g2 pyodide build
 
       - name: set up node
