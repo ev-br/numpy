@@ -19,7 +19,7 @@ permissions:
 jobs:
   build-wasm-emscripten:
     runs-on: ubuntu-22.04
-    if: "github.repository == 'numpy/numpy'"
+    if: "github.repository == 'ev-br/numpy'"
     env:
       PYODIDE_VERSION: 0.23.1
       # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
@@ -58,8 +58,15 @@ jobs:
         run: |
           # Pyodide is still in the process of adding better/easier support for
           # non-setup.py based builds.
-          cp pyproject.toml.setuppy pyproject.toml
-          CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+          # cp pyproject.toml.setuppy pyproject.toml
+          which emcc
+          #CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+          #pip install meson ninja
+          #python vendored-meson/meson/meson.py configure -Dallow-noblas=true
+          python vendored-meson/meson/meson.py setup build_wasm -Dallow-noblas=true --prefix=$PWD/installdir --cross-file cross.wasm.txt
+          python vendored-meson/meson/meson.py install -C builddir
+          which python
+          export PYTHONPATH=$PWR/installdir/lib/python3.11/site-packages/
 
       - name: set up node
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
