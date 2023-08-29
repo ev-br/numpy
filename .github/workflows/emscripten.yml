@@ -62,8 +62,8 @@ jobs:
           which emcc
           #CFLAGS=-g2 LDFLAGS=-g2 pyodide build
           #pip install meson ninja
-          python vendored-meson/meson/meson.py configure -Dallow-noblas=true
-          python vendored-meson/meson/meson.py setup build_wasm --prefix=$PWD/installdir --cross-file cross.wasm.txt
+          #python vendored-meson/meson/meson.py configure -Dallow-noblas=true
+          python vendored-meson/meson/meson.py setup build_wasm -Dallow-noblas=true --prefix=$PWD/installdir --cross-file cross.wasm.txt
           python vendored-meson/meson/meson.py install -C builddir
           which python
           export PYTHONPATH=$PWR/installdir/lib/python3.11/site-packages/
