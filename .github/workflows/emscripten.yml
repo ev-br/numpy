@@ -60,7 +60,10 @@ jobs:
           # non-setup.py based builds.
           # cp pyproject.toml.setuppy pyproject.toml
           which emcc
-          CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+          #CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+          meson setup builddir --prefix=$PWD/installdir
+          meson install -C builddir
+          which python
 
       - name: set up node
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
