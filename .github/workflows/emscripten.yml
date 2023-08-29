@@ -61,7 +61,8 @@ jobs:
           # cp pyproject.toml.setuppy pyproject.toml
           which emcc
           #CFLAGS=-g2 LDFLAGS=-g2 pyodide build
-          meson setup builddir --prefix=$PWD/installdir
+          pip install meson ninja
+          meson setup builddir --prefix=$PWD/installdir --cross-file cross.wasm.txt
           meson install -C builddir
           which python
 
