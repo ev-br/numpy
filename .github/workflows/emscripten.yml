@@ -62,9 +62,10 @@ jobs:
           which emcc
           #CFLAGS=-g2 LDFLAGS=-g2 pyodide build
           pip install meson ninja
-          meson setup builddir --prefix=$PWD/installdir --cross-file cross.wasm.txt
-          meson install -C builddir
+          python vendored-meson/meson/meson.py setup build_wasm --prefix=$PWD/installdir --cross-file cross.wasm.txt
+          python vendored-meson/meson/meson.py install -C builddir
           which python
+          export PYTHONPATH=$PWR/installdir/lib/python3.11/site-packages/
 
       - name: set up node
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
