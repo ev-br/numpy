@@ -1,0 +1,143 @@
+name: report-compliance
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ARRAY_LIBRARY: 'numpy'
+  ARRAY_API_TESTS_REF: 'master'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  array_api_tests:
+    name: 'Report Array API compliance (${{ matrix.os }})'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+
+    runs-on: ${{ matrix.os }}
+    # if: github.repository == 'numpy/numpy'
+
+    steps:
+      - name: 'Checkout NumPy'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: 'Checkout Array API test suite repository'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: data-apis/array-api-tests
+          ref: ${{ env.ARRAY_API_TESTS_REF }}
+          submodules: 'true'
+          path: array-api-tests
+          persist-credentials: false
+
+      - name: 'Install Python'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+        timeout-minutes: 5
+
+      - name: 'Install dependencies'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements/build_requirements.txt
+          python -m pip install -r requirements/test_requirements.txt
+          python -m pip install -r ${GITHUB_WORKSPACE}/array-api-tests/requirements.txt
+          python -m pip install pytest-json-report
+        timeout-minutes: 10
+
+      - name: 'Build and install NumPy'
+        run: |
+          python -m pip install . -v \
+            -Csetup-args=-Dallow-noblas=true \
+            -Csetup-args=-Dcpu-baseline=none \
+            -Csetup-args=-Dcpu-dispatch=none
+        timeout-minutes: 30
+
+      - name: 'Run test suite'
+        id: tests
+        continue-on-error: true
+        env:
+          ARRAY_API_TESTS_MODULE: ${{ env.ARRAY_LIBRARY }}
+          PYTHONWARNINGS: 'ignore::UserWarning::,ignore::DeprecationWarning::,ignore::RuntimeWarning::'
+        run: |
+          cd ${GITHUB_WORKSPACE}/array-api-tests
+          python -m pytest array_api_tests -c pytest.ini -n 4 --max-examples 1000 \
+            --derandomize --disable-deadline --json-report
+        timeout-minutes: 360
+
+      - name: 'Add meta data'
+        run: |
+          cd "${GITHUB_WORKSPACE}/array-api-tests"
+          if [ ! -f .report.json ]; then
+            echo "::error::pytest did not produce .report.json"
+            exit 1
+          fi
+          library_version="$(python -c "import importlib.metadata; print(importlib.metadata.version('${{ env.ARRAY_LIBRARY }}'))")"
+          platform="$(python -c 'import platform; print(platform.platform())')"
+          system="$(python -c 'import platform; print(platform.system())')"
+          release="$(python -c 'import platform; print(platform.release())')"
+          machine="$(python -c 'import platform; print(platform.machine())')"
+          python_version="$(python -c 'import platform; print(platform.python_version())')"
+          test_suite="$(git rev-parse HEAD)"
+          jq \
+            --arg schema 'v1' \
+            --arg name '${{ env.ARRAY_LIBRARY }}' \
+            --arg version "${library_version}" \
+            --arg timestamp "$(date --utc +'%Y-%m-%dT%H:%M:%SZ')" \
+            --arg runner '${{ matrix.os }}' \
+            --arg platform "${platform}" \
+            --arg system "${system}" \
+            --arg release "${release}" \
+            --arg machine "${machine}" \
+            --arg execution_target 'cpu' \
+            --arg python_version "${python_version}" \
+            --arg test_suite "${test_suite}" \
+            '{
+              schema: $schema,
+              name: $name,
+              version: $version,
+              timestamp: $timestamp,
+              runner: $runner,
+              platform: {
+                description: $platform,
+                system: $system,
+                release: $release,
+                machine: $machine
+              },
+              execution_target: {
+                kind: $execution_target
+              },
+              python: $python_version,
+              test_suite: $test_suite,
+              data: {
+                duration: .duration,
+                exitcode: .exitcode,
+                summary: .summary,
+                tests: .tests
+              }
+            }' \
+            .report.json > array_api_compliance-${{ matrix.os }}.json
+
+      - name: 'Upload test suite results'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: 'array_api_compliance-${{ matrix.os }}.json'
+          path: ${{ github.workspace }}/array-api-tests/array_api_compliance-${{ matrix.os }}.json
+          if-no-files-found: error
+          retention-days: 45
+        timeout-minutes: 10
