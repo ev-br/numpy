@@ -99,7 +99,7 @@ jobs:
           test_suite="$(git rev-parse HEAD)"
           jq \
             --arg schema 'v1' \
-            --arg name '${{ env.ARRAY_LIBRARY }}' \
+            --arg name '${{ env.ARRAY_LIBRARY }}-fork' \
             --arg version "${library_version}" \
             --arg api_version "${api_version}" \
             --arg timestamp "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
