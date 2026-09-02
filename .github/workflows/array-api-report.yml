@@ -100,7 +100,7 @@ jobs:
             --arg name '${{ env.ARRAY_LIBRARY }}' \
             --arg version "${library_version}" \
             --arg api_version '${api_version}' \
-            --arg timestamp "$(date --utc +'%Y-%m-%dT%H:%M:%SZ')" \
+            --arg timestamp "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
             --arg platform "${platform}" \
             --arg system "${system}" \
             --arg release "${release}" \
